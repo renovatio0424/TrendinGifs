@@ -5,10 +5,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.j2rk.trendingifs.R
 import com.j2rk.trendingifs.network.BASE_URL_GIPHY
 import com.j2rk.trendingifs.network.GiphyService
@@ -29,6 +30,8 @@ class HomeFragment : Fragment() {
         .build()
         .create(GiphyService::class.java)
 
+    private lateinit var recyclerView: RecyclerView
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -37,10 +40,12 @@ class HomeFragment : Fragment() {
         homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_home, container, false)
-        val textView: TextView = root.findViewById(R.id.text_home)
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
+
+        recyclerView = root.findViewById<RecyclerView>(R.id.rvTrendingList).apply {
+            layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
+            adapter = TrendingListAdapter()
+        }
+
         return root
     }
 
@@ -52,6 +57,7 @@ class HomeFragment : Fragment() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 Log.d("Main", "response: $it")
+                (recyclerView.adapter as TrendingListAdapter).addAllTrendingList(it.data)
             }, {
                 Log.e("Main", "error: $it")
             })
