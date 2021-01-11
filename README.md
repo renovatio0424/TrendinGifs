@@ -34,3 +34,4 @@ GIPHY API를 이용해서 GIPHY Application의 Trending GIFs 화면과 Favorites
     - Retrofit service 리턴 타입을 RxJava로 만들기 위해 
 5. Gson Converter
     - api response 값을 parsing 하는 작업을 하는 시간을 줄이기 위해
+6. Glide
