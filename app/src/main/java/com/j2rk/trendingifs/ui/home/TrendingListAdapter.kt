@@ -3,14 +3,15 @@ package com.j2rk.trendingifs.ui.home
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.ImageView
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.j2rk.trendingifs.R
-import com.j2rk.trendingifs.network.model.Data
+import com.j2rk.trendingifs.data.db.model.GiphyGif
 
-class TrendingListAdapter : RecyclerView.Adapter<TrendingListAdapter.TrendingViewHolder>() {
-    private var trendingGifList: ArrayList<Data> = arrayListOf()
+class TrendingListAdapter(private val data: LiveData<List<GiphyGif>>) : RecyclerView.Adapter<TrendingListAdapter.TrendingViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrendingViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_trending_gifs, parent, false)
@@ -18,24 +19,31 @@ class TrendingListAdapter : RecyclerView.Adapter<TrendingListAdapter.TrendingVie
     }
 
     override fun onBindViewHolder(holder: TrendingViewHolder, position: Int) {
-        holder.onBind(trendingGifList[position])
+        data.value?.let {
+            holder.onBind(it[position])
+        }
     }
 
-    override fun getItemCount() = trendingGifList.size
+    override fun getItemCount() = data.value?.size ?: 0
 
-    fun addAllTrendingList(trendingList: List<Data>) {
-        val startPosition = trendingGifList.lastIndex + 1
-        trendingGifList.addAll(trendingList)
-        notifyItemRangeInserted(startPosition, trendingList.size)
+    fun updateAll() {
+        notifyDataSetChanged()
     }
 
     class TrendingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val ivThumbnail = view.findViewById<ImageView>(R.id.ivGifThumbnail)
+        private val cbFavorite = view.findViewById<CheckBox>(R.id.cbFavorite)
 
-        fun onBind(trendingGifItem: Data) {
+        fun onBind(giphyGif: GiphyGif) {
             Glide.with(itemView)
-                .load(trendingGifItem.images.fixed_width.url)
+                .load(giphyGif.thumbnailUrl)
                 .into(ivThumbnail)
+
+            cbFavorite.isChecked = giphyGif.isFavorite
+
+            cbFavorite.setOnCheckedChangeListener { _, isChecked ->
+                giphyGif.isFavorite = isChecked
+            }
         }
     }
 }

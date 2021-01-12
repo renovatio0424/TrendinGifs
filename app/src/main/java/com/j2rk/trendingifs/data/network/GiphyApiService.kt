@@ -1,23 +1,20 @@
-package com.j2rk.trendingifs.network
+package com.j2rk.trendingifs.data.network
 
-import com.j2rk.trendingifs.network.model.ResponseTrendingGifs
-import io.reactivex.rxjava3.core.Single
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
+import com.j2rk.trendingifs.data.network.model.ResponseTrendingGifs
+import io.reactivex.Single
 import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.*
 
 const val API_KEY_GIPHY = "eBRs5gkduPLn9phqKxkyaPw1SToJ9hIB"
 const val BASE_URL_GIPHY = "https://api.giphy.com/"
 
-interface GiphyService {
+interface GiphyApiService {
     @GET("v1/gifs/trending")
     fun getTrendingGifs(
         @Query("api_key") apiKey: String = API_KEY_GIPHY,
-        @Query("limit") limit: Int = 20,
+        @Query("limit") limit: Int = 25,
+        @Query("offset") offset: Int = 0,
         @Query("rating") rating: String = ContentRating.G.toString().toLowerCase(Locale.ENGLISH),
     ): Single<ResponseTrendingGifs>
 }

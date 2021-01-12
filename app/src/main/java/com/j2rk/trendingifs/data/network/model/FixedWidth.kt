@@ -1,6 +1,6 @@
-package com.j2rk.trendingifs.network.model
+package com.j2rk.trendingifs.data.network.model
 
-data class FixedWidthSmall(
+data class FixedWidth(
     val height: String,
     val mp4: String,
     val mp4_size: String,

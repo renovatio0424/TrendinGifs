@@ -1,7 +1,6 @@
 package com.j2rk.trendingifs.ui.home
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,26 +9,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.room.Room
 import com.j2rk.trendingifs.R
-import com.j2rk.trendingifs.network.BASE_URL_GIPHY
-import com.j2rk.trendingifs.network.GiphyService
-import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.schedulers.Schedulers
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.j2rk.trendingifs.data.db.AppDatabase
 
 class HomeFragment : Fragment() {
 
     private lateinit var homeViewModel: HomeViewModel
-
-    private val retrofit: GiphyService = Retrofit.Builder()
-        .baseUrl(BASE_URL_GIPHY)
-        .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(GiphyService::class.java)
-
     private lateinit var recyclerView: RecyclerView
 
     override fun onCreateView(
@@ -37,29 +23,26 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
-
-        recyclerView = root.findViewById<RecyclerView>(R.id.rvTrendingList).apply {
-            layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
-            adapter = TrendingListAdapter()
-        }
-
-        return root
+        return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
-        Log.d("Main", "on start")
-        retrofit.getTrendingGifs()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                Log.d("Main", "response: $it")
-                (recyclerView.adapter as TrendingListAdapter).addAllTrendingList(it.data)
-            }, {
-                Log.e("Main", "error: $it")
-            })
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val appDatabase = Room.databaseBuilder(view.context, AppDatabase::class.java, "TrendingGifDb").build()
+        homeViewModel =
+            ViewModelProvider(this, HomeViewModelFactory(appDatabase)).get(HomeViewModel::class.java)
+
+        recyclerView = view.findViewById<RecyclerView>(R.id.rvTrendingList).apply {
+            layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
+            adapter = TrendingListAdapter(homeViewModel.giphyGifList)
+        }
+
+        homeViewModel.giphyGifList.observe(viewLifecycleOwner, {
+            recyclerView.adapter.let {
+                if (it is TrendingListAdapter)
+                    it.updateAll()
+            }
+        })
     }
 }
