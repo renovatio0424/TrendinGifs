@@ -1,22 +1,25 @@
 package com.j2rk.trendingifs.ui.home
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import androidx.room.Room
 import com.j2rk.trendingifs.R
-import com.j2rk.trendingifs.data.db.AppDatabase
+import com.j2rk.trendingifs.ui.GifListAdapter
+import com.j2rk.trendingifs.ui.MainViewModel
+import org.koin.android.viewmodel.ext.android.sharedViewModel
 
 class HomeFragment : Fragment() {
-
-    private lateinit var homeViewModel: HomeViewModel
     private lateinit var recyclerView: RecyclerView
+
+    private val mainViewModel: MainViewModel by sharedViewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,20 +32,50 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val appDatabase = Room.databaseBuilder(view.context, AppDatabase::class.java, "TrendingGifDb").build()
-        homeViewModel =
-            ViewModelProvider(this, HomeViewModelFactory(appDatabase)).get(HomeViewModel::class.java)
-
         recyclerView = view.findViewById<RecyclerView>(R.id.rvTrendingList).apply {
-            layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
-            adapter = TrendingListAdapter(homeViewModel.giphyGifList)
+            layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL).apply {
+                gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
+            }
+
+
+            adapter = GifListAdapter().apply {
+                onItemClick = { giphyGif, position ->
+                    Handler(Looper.getMainLooper()).post { notifyItemChanged(position) }
+                    mainViewModel.updateGiphy(giphyGif)
+                }
+            }
+
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+
+                    val lastVisibleItemPosition =
+                        (recyclerView.layoutManager as StaggeredGridLayoutManager).findLastVisibleItemPositions(
+                            null
+                        ).maxByOrNull { it } ?: 0
+                    val lastIndex = recyclerView.adapter?.itemCount ?: 0
+                    val loadIndex = lastIndex - 10
+
+                    val nextOffset = (recyclerView.adapter as GifListAdapter).lastOffset + 1
+
+                    if (lastVisibleItemPosition == loadIndex) {
+                        mainViewModel.loadNextGiphyList(nextOffset)
+                    }
+                }
+            })
         }
 
-        homeViewModel.giphyGifList.observe(viewLifecycleOwner, {
-            recyclerView.adapter.let {
-                if (it is TrendingListAdapter)
-                    it.updateAll()
+        mainViewModel.giphyGifList.observe(viewLifecycleOwner, {
+            recyclerView.adapter.let { adapter ->
+                if (adapter is GifListAdapter) {
+                    if (adapter.lastOffset != it[0].offset || adapter.lastOffset == 0)
+                        adapter.updateAll(it)
+                }
             }
+        })
+
+        mainViewModel.errorMessage.observe(viewLifecycleOwner, {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         })
     }
 }

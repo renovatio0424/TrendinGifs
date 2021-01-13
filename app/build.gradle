@@ -75,4 +75,10 @@ dependencies {
     implementation "androidx.room:room-rxjava2:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
     kapt "android.arch.persistence.room:compiler:$room_version"
+
+    //koin
+    def koin_version = "2.0.1"
+    implementation "org.koin:koin-core:$koin_version"
+    implementation "org.koin:koin-android:$koin_version"
+    implementation "org.koin:koin-android-viewmodel:$koin_version"
 }

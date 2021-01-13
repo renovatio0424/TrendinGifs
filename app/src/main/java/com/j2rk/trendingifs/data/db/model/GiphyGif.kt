@@ -5,10 +5,10 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "giphy_gif")
 data class GiphyGif(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
-    val remoteId: String,
+    @PrimaryKey
+    val id: String,
+    val title: String,
     val thumbnailUrl: String,
     var isFavorite: Boolean = false,
-    val pageIndex: Int
+    val offset: Int
 )
