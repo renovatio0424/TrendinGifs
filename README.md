@@ -35,3 +35,6 @@ GIPHY API를 이용해서 GIPHY Application의 Trending GIFs 화면과 Favorites
 5. Gson Converter
     - api response 값을 parsing 하는 작업을 하는 시간을 줄이기 위해
 6. Glide
+    - Image Loading 을 위해 사용
+7. Koin
+    - Dependency Injection을 위임하기 위해 사용하기 위해 사용
